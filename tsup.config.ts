@@ -2,14 +2,16 @@ import { cpSync } from 'node:fs';
 
 import { defineConfig } from 'tsup';
 
+const isDockerBuild = process.env.DOCKER_ENV === 'true';
+
 export default defineConfig({
   entry: ['src'],
   outDir: 'dist',
   splitting: false,
-  sourcemap: true,
+  sourcemap: !isDockerBuild,
   clean: true,
-  minify: true,
-  format: ['cjs', 'esm'],
+  minify: !isDockerBuild,
+  format: isDockerBuild ? ['cjs'] : ['cjs', 'esm'],
   onSuccess: async () => {
     cpSync('src/utils/translations', 'dist/translations', { recursive: true });
   },
