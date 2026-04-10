@@ -675,20 +675,17 @@ export class BaileysStartupService extends ChannelStartupService {
       userDevicesCache: this.userDevicesCache,
       transactionOpts: { maxCommitRetries: 10, delayBetweenTriesMs: 3000 },
       patchMessageBeforeSending(message) {
-        if (
-          message.deviceSentMessage?.message?.listMessage?.listType === proto.Message.ListMessage.ListType.PRODUCT_LIST
-        ) {
-          message = JSON.parse(JSON.stringify(message));
-
-          message.deviceSentMessage.message.listMessage.listType = proto.Message.ListMessage.ListType.SINGLE_SELECT;
+        const productListType = proto.Message.ListMessage.ListType.PRODUCT_LIST;
+        const singleSelectType = proto.Message.ListMessage.ListType.SINGLE_SELECT;
+      
+        if (message.deviceSentMessage?.message?.listMessage?.listType === productListType) {
+          message.deviceSentMessage.message.listMessage.listType = singleSelectType;
         }
-
-        if (message.listMessage?.listType == proto.Message.ListMessage.ListType.PRODUCT_LIST) {
-          message = JSON.parse(JSON.stringify(message));
-
-          message.listMessage.listType = proto.Message.ListMessage.ListType.SINGLE_SELECT;
+      
+        if (message.listMessage?.listType === productListType) {
+          message.listMessage.listType = singleSelectType;
         }
-
+      
         return message;
       },
     };
