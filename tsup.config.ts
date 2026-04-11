@@ -2,7 +2,7 @@ import { cpSync } from 'node:fs';
 
 import { defineConfig } from 'tsup';
 
-const isDockerBuild = process.env.DOCKER_ENV === 'true';
+const isDockerBuild = process.env.TSUP_DOCKER_BUILD === 'true';
 
 export default defineConfig({
   entry: ['src'],
