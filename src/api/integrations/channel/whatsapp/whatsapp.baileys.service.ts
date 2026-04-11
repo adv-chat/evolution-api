@@ -2205,16 +2205,27 @@ export class BaileysStartupService extends ChannelStartupService {
     }
 
     // Newer WA builds can silently keep list messages in PENDING when wrapped as "forward".
+    // Also, sending proto list payload through client.sendMessage can throw "Invalid media type".
+    // Relay the proto message directly to avoid content parser mismatches.
     if (message['listMessage']) {
       if (message['contextInfo'] && !message['listMessage']['contextInfo']) {
         message['listMessage']['contextInfo'] = message['contextInfo'];
       }
 
-      return await this.client.sendMessage(
+      const m = generateWAMessageFromContent(
         sender,
-        message as unknown as AnyMessageContent,
-        option as unknown as MiscMessageGenerationOptions,
+        { listMessage: message['listMessage'] } as proto.IMessage,
+        {
+          timestamp: new Date(),
+          userJid: this.instance.wuid,
+          messageId,
+          quoted,
+        },
       );
+
+      const id = await this.client.relayMessage(sender, m.message as proto.IMessage, { messageId: m.key.id });
+      m.key = { id: id || m.key.id, remoteJid: sender, participant: isPnUser(sender) ? sender : undefined, fromMe: true };
+      return m;
     }
 
     if (!message['audio'] && !message['poll'] && !message['sticker'] && sender != 'status@broadcast') {
