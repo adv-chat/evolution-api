@@ -2204,6 +2204,19 @@ export class BaileysStartupService extends ChannelStartupService {
       );
     }
 
+    // Newer WA builds can silently keep list messages in PENDING when wrapped as "forward".
+    if (message['listMessage']) {
+      if (message['contextInfo'] && !message['listMessage']['contextInfo']) {
+        message['listMessage']['contextInfo'] = message['contextInfo'];
+      }
+
+      return await this.client.sendMessage(
+        sender,
+        message as unknown as AnyMessageContent,
+        option as unknown as MiscMessageGenerationOptions,
+      );
+    }
+
     if (!message['audio'] && !message['poll'] && !message['sticker'] && sender != 'status@broadcast') {
       return await this.client.sendMessage(
         sender,
@@ -2392,17 +2405,19 @@ export class BaileysStartupService extends ChannelStartupService {
           // group?.participants,
         );
       } else {
-        contextInfo = {
-          mentionedJid: [],
-          groupMentions: [],
-          //expiration: 7776000,
-          ephemeralSettingTimestamp: {
-            low: Math.floor(Date.now() / 1000) - 172800,
-            high: 0,
-            unsigned: false,
-          },
-          disappearingMode: { initiator: 0 },
-        };
+        if (!(message as any)?.listMessage) {
+          contextInfo = {
+            mentionedJid: [],
+            groupMentions: [],
+            //expiration: 7776000,
+            ephemeralSettingTimestamp: {
+              low: Math.floor(Date.now() / 1000) - 172800,
+              high: 0,
+              unsigned: false,
+            },
+            disappearingMode: { initiator: 0 },
+          };
+        }
         messageSent = await this.sendMessage(
           sender,
           message,
@@ -3440,7 +3455,7 @@ export class BaileysStartupService extends ChannelStartupService {
           buttonText: data?.buttonText,
           footerText: data?.footerText,
           sections: data.sections,
-          listType: 2,
+          listType: proto.Message.ListMessage.ListType.SINGLE_SELECT,
         },
       },
       {
